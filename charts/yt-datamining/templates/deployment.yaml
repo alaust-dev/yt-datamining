@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: {{ .Release.Name }}
+          image: ghcr.io/alaust-dev/yt-datamining:1.0.0
+          imagePullPolicy: Always
+          env:
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secret
+                  key: api-key
+                  optional: false
+            - name: DB_HOST
+              value: "postgresql-service.postgresql"
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_USER
+              value: "yt_dataminer"
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secret
+                  key: db-password
+                  optional: false
+            - name: DB_NAME
+              value: "yt_datamining"
