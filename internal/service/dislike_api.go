@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 )
 
 type DislikeApi struct {
@@ -34,6 +35,12 @@ func (api *DislikeApi) GetDislikes(videoId string) int32 {
 		return 0
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusTooManyRequests {
+		fmt.Println("Sending too many requests to dislike api. waiting...")
+		time.Sleep(1 * time.Minute)
+		return api.GetDislikes(videoId)
+	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
