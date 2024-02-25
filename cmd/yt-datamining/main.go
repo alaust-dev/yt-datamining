@@ -9,6 +9,7 @@ import (
 	"github.com/alaust-dev/yt-datamining/internal"
 	"github.com/alaust-dev/yt-datamining/internal/service"
 	"github.com/go-co-op/gocron"
+	"github.com/joho/godotenv"
 )
 
 var creatorChannelMap = []string{
@@ -38,24 +39,29 @@ var creatorChannelMap = []string{
 }
 var published_after = time.Date(2024, 2, 1, 0, 0, 0, 0, time.Now().Local().Location())
 
-var api_key = os.Getenv("API_KEY")
-var host = os.Getenv("DB_HOST")
-var port = os.Getenv("DB_PORT")
-var user = os.Getenv("DB_USER")
-var password = os.Getenv("DB_PASSWORD")
-var dbname = os.Getenv("DB_NAME")
-
 var database internal.Database
 var yt service.Youtube
 var dislikeApi service.DislikeApi
 
 func main() {
-	port, err := strconv.Atoi(port)
+	err := godotenv.Load()
+	if err != nil {
+		fmt.Println("Could not load .env file. Ignoring...")
+	}
+
+	api_key := os.Getenv("API_KEY")
+	host := os.Getenv("DB_HOST")
+	port := os.Getenv("DB_PORT")
+	user := os.Getenv("DB_USER")
+	password := os.Getenv("DB_PASSWORD")
+	dbname := os.Getenv("DB_NAME")
+
+	int_port, err := strconv.Atoi(port)
 	if err != nil {
 		panic("Could not parse Port to int: " + err.Error())
 	}
 
-	database = *internal.NewDatabase(host, port, user, password, dbname)
+	database = *internal.NewDatabase(host, int_port, user, password, dbname)
 	yt = *service.NewYoutube(api_key)
 	dislikeApi = *service.NewDislikeApi()
 
@@ -84,7 +90,6 @@ func runJob() {
 			database.InsertVideoCategory(&video)
 			database.InsertVideoTags(&video)
 		}
-
 	}
 
 	fmt.Println("Finished Job!")
