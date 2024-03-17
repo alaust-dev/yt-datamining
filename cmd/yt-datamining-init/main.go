@@ -47,6 +47,8 @@ const (
 	dbname   = ""
 )
 
+// This programm just do the init part of saving channel meta data like channel name for once
+
 func main() {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
 		"password=%s dbname=%s sslmode=disable",

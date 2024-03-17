@@ -65,6 +65,7 @@ func main() {
 	yt = *service.NewYoutube(api_key)
 	dislikeApi = *service.NewDislikeApi()
 
+	// 2.2b cron scheduled for every 12 hours to fetch new data
 	s := gocron.NewScheduler(time.Local)
 	s.Every(12).Hour().Do(runJob)
 	s.StartBlocking()
@@ -72,20 +73,28 @@ func main() {
 
 func runJob() {
 	for _, channelId := range creatorChannelMap {
+		// 2.1 Fetch chanel interaction data (channel views, video_count, etc.)
 		channel := yt.FetchChannel(channelId)
+
+		// 2.5 Saving channel interaction data to database
 		database.InsertChannelInteraction(channel)
 
 		fmt.Println("Processing Channel: " + channel.Snippet.Title)
 
+		// 2.1 Fetch all viedeos in the timespan of the project (published_after - now)
 		videos := yt.FetchVideosUntilDate(channel.ContentDetails.RelatedPlaylists.Uploads, published_after)
 		for _, video := range videos {
 			fmt.Println("Processing Video: " + video.Snippet.Title)
 
+			// 2.1 Fetch dislikes from seperate api (return your dislike api)
 			dislikes := dislikeApi.GetDislikes(video.Id)
 
+			// 2.5 saving new video if it does not exist
 			if !database.VideoWithIdExists(video.Id) {
 				database.CreateVideo(channelId, &video)
 			}
+
+			// 2.5 Save fetched video data to db
 			database.InsertViedoInteraction(&video, dislikes)
 			database.InsertVideoCategory(&video)
 			database.InsertVideoTags(&video)
